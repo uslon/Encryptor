@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import pickle
 parser = argparse.ArgumentParser()
 subs = parser.add_subparsers()
 alphabet = []
@@ -92,10 +93,9 @@ encode_parser.add_argument("--key", required=True, type=str, help="cipher's key"
 encode_parser.add_argument("--input-file", type=str, help="input file")
 encode_parser.add_argument("--output-file", type=str, help="output file")
 
-hack_parser.add_argument("--cipher", required=True, type=str, help="type of cipher")
-hack_parser.add_argument("--key", required=True, type=str, help="cipher's key")
 hack_parser.add_argument("--input-file", type=str, help="input file")
 hack_parser.add_argument("--output-file   ", type=str, help="output file")
+hack_parser.add_argument("--model-file", required=True, type=str, help='path to model')
 
 train_parser.add_argument("--text-file", type=str, help='training text file')
 train_parser.add_argument("--model-file", required=True, type=str, help='path to model')
@@ -141,6 +141,13 @@ def check_key(key):
     for i in key:
         if i not in pos:
             raise KeyError("invalid key")
+
+
+def distance (a, b):
+    d = 0
+    for ai, bi in a.items(), b.items():
+        d += abs(ai - bi)
+    return d
 
 
 args = parser.parse_args()
@@ -221,7 +228,7 @@ elif args.module == 'train':
     init_standard_alphabet()
     training_string = ''
     if args.text_file is not None:
-        with open(args.input_file, 'r') as f:
+        with open(args.text_file, 'r') as f:
             training_string = f.read()
             f.close()
     else:
@@ -229,10 +236,45 @@ elif args.module == 'train':
 
     for symb in training_string:
         if symb not in stat:
-            stat[symb] = 1
+            continue
         stat[symb] += 1
 
-    with open(args.model_file, "w") as model:
-        for i in stat:
-            model.write(str(i) + ' ' + str(stat[i]) + '\n')
+    with open(args.model_file, "wb") as model:
+        pickle.dump(stat, model)
         model.close()
+
+else:
+    init_standard_alphabet()
+    string = ''
+    if args.input_file is not None:
+        with open(args.input_file, 'r') as f:
+            string = f.read()
+            f.close()
+    else:
+        string = input()
+    dic = {}
+    with open(args.model_file, 'rb') as f:
+        dic = pickle.load(f)
+        f.close()
+
+    mn = 1000000000000000000
+    j = 0
+    for i in range(length):
+        encoded_string = encode_caesar_string(string, 1)
+        for symb in encoded_string:
+            stat[symb] += 1
+        dist = distance(stat, dic)
+        if i == 0:
+            mn = dist
+        elif dist < mn:
+            mn = dist
+            j = i
+
+    result = encode_caesar_string(string, j)
+    if args.output_file is not None:
+        with open(args.output_file, 'w') as f:
+            f.write(result)
+            f.close()
+    else:
+        print(result)
+
