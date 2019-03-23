@@ -94,7 +94,7 @@ encode_parser.add_argument("--input-file", type=str, help="input file")
 encode_parser.add_argument("--output-file", type=str, help="output file")
 
 hack_parser.add_argument("--input-file", type=str, help="input file")
-hack_parser.add_argument("--output-file   ", type=str, help="output file")
+hack_parser.add_argument("--output-file", type=str, help="output file")
 hack_parser.add_argument("--model-file", required=True, type=str, help='path to model')
 
 train_parser.add_argument("--text-file", type=str, help='training text file')
@@ -145,8 +145,8 @@ def check_key(key):
 
 def distance (a, b):
     d = 0
-    for ai, bi in a.items(), b.items():
-        d += abs(ai - bi)
+    for i in a.keys():
+        d += abs(a[i] - b[i])
     return d
 
 
