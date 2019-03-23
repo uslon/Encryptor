@@ -129,7 +129,7 @@ def decode_vigenere_string(s, key):
 
 
 def encode_caesar_string(s, key):
-    word = chr(ord('a') + normalize(key, 26))
+    word = alphabet[normalize(key, length)]
     return encode_vigenere_string(s, word)
 
 
