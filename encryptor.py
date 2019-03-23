@@ -265,7 +265,7 @@ else:
             stat[symb] += 1
         rank[i] = distance(stat, dic)
 
-    for j in rank.most_common()[-5:]:
+    for j in rank.most_common()[-2:]:
         key = j[0]
         print(j)
         result = decode_caesar_string(string, key)
