@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import argparse
 import pickle
+import collections
 parser = argparse.ArgumentParser()
 subs = parser.add_subparsers()
 alphabet = []
@@ -257,24 +258,21 @@ else:
         dic = pickle.load(f)
         f.close()
 
-    mn = 1000000000000000000
-    j = 0
+    rank = collections.Counter()
     for i in range(length):
-        encoded_string = encode_caesar_string(string, 1)
-        for symb in encoded_string:
+        decoded_string = decode_caesar_string(string, i)
+        for symb in decoded_string:
             stat[symb] += 1
-        dist = distance(stat, dic)
-        if i == 0:
-            mn = dist
-        elif dist < mn:
-            mn = dist
-            j = i
+        rank[i] = distance(stat, dic)
 
-    result = encode_caesar_string(string, j)
-    if args.output_file is not None:
-        with open(args.output_file, 'w') as f:
-            f.write(result)
-            f.close()
-    else:
-        print(result)
-
+    for j in rank.most_common()[-2:]:
+        key = j[0]
+        print(j)
+        result = decode_caesar_string(string, key)
+        print("----------------------", key, "----------------------")
+        if args.output_file is not None:
+            with open(args.output_file, 'w') as f:
+                f.write(result)
+                f.close()
+        else:
+            print(result)
