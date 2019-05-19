@@ -201,6 +201,9 @@ def main():
                 continue
             STAT[symbol] += 1
 
+        for symbol in STAT.keys():
+            STAT[symbol] /= len(training_string)
+
         with open(args.model_file, "wb") as model:
             pickle.dump(STAT, model)
     else:
@@ -219,6 +222,9 @@ def main():
         rank = collections.Counter()
         for symbol in hacking_string:
             STAT[symbol] += 1
+
+        for symbol in STAT.keys():
+            STAT[symbol] /= len(hacking_string)
 
         last_key = None
         first_value = None
