@@ -2,36 +2,30 @@
 import argparse
 import pickle
 import collections
+import string
+import sys
+
 PARSER = argparse.ArgumentParser()
 SUBS = PARSER.add_subparsers()
 ALPHABET = []
 STAT = {}
 POS = {}
-PUNCTUATION = '.,;:?!\'\" -\n'
-LENGTH = 26 + 26 + 10 + len(PUNCTUATION)
+LENGTH = len(string.ascii_letters) + len(string.digits) + len(string.punctuation)
 
 
 def fill_standard_alphabet():
     cnt = 0
-    for letter in range(26):
-        letter = chr(letter + ord('a'))
+    for letter in string.ascii_letters:
         POS[letter] = cnt
         cnt += 1
         ALPHABET.append(letter)
 
-    for letter in range(26):
-        letter = chr(letter + ord('A'))
-        POS[letter] = cnt
+    for digit in string.digits:
+        POS[digit] = cnt
         cnt += 1
-        ALPHABET.append(letter)
+        ALPHABET.append(digit)
 
-    for i in range(10):
-        letter = str(i)
-        POS[letter] = cnt
-        cnt += 1
-        ALPHABET.append(letter)
-
-    for letter in PUNCTUATION:
+    for letter in string.punctuation:
         ALPHABET.append(letter)
         POS[letter] = cnt
         cnt += 1
@@ -42,35 +36,33 @@ def init_standard_alphabet():
         STAT[i] = 0
 
 
-fill_standard_alphabet()
+def parse_args():
+    DECODE_PARSER = SUBS.add_parser("decode", description='this is decoding module')
+    ENCODE_PARSER = SUBS.add_parser("encode", description='this is encoding module')
+    HACK_PARSER = SUBS.add_parser("hack", description='this is hacking module')
+    TRAIN_PARSER = SUBS.add_parser("train", description='this is training module')
 
+    DECODE_PARSER.set_defaults(module="decode")
+    ENCODE_PARSER.set_defaults(module="encode")
+    HACK_PARSER.set_defaults(module="hack")
+    TRAIN_PARSER.set_defaults(module="train")
 
-DECODE_PARSER = SUBS.add_parser("decode", description='this is decoding module')
-ENCODE_PARSER = SUBS.add_parser("encode", description='this is encoding module')
-HACK_PARSER = SUBS.add_parser("hack", description='this is hacking module')
-TRAIN_PARSER = SUBS.add_parser("train", description='this is training module')
+    DECODE_PARSER.add_argument("--cipher", required=True, type=str, help="type of cipher")
+    DECODE_PARSER.add_argument("--key", required=True, type=str, help="cipher's key")
+    DECODE_PARSER.add_argument("--input-file", type=str, help="input file")
+    DECODE_PARSER.add_argument("--output-file", type=str, help="output file")
 
-DECODE_PARSER.set_defaults(module="decode")
-ENCODE_PARSER.set_defaults(module="encode")
-HACK_PARSER.set_defaults(module="hack")
-TRAIN_PARSER.set_defaults(module="train")
+    ENCODE_PARSER.add_argument("--cipher", required=True, type=str, help="type of cipher")
+    ENCODE_PARSER.add_argument("--key", required=True, type=str, help="cipher's key")
+    ENCODE_PARSER.add_argument("--input-file", type=str, help="input file")
+    ENCODE_PARSER.add_argument("--output-file", type=str, help="output file")
 
-DECODE_PARSER.add_argument("--cipher", required=True, type=str, help="type of cipher")
-DECODE_PARSER.add_argument("--key", required=True, type=str, help="cipher's key")
-DECODE_PARSER.add_argument("--input-file", type=str, help="input file")
-DECODE_PARSER.add_argument("--output-file", type=str, help="output file")
+    HACK_PARSER.add_argument("--input-file", type=str, help="input file")
+    HACK_PARSER.add_argument("--output-file", type=str, help="output file")
+    HACK_PARSER.add_argument("--model-file", required=True, type=str, help='path to model')
 
-ENCODE_PARSER.add_argument("--cipher", required=True, type=str, help="type of cipher")
-ENCODE_PARSER.add_argument("--key", required=True, type=str, help="cipher's key")
-ENCODE_PARSER.add_argument("--input-file", type=str, help="input file")
-ENCODE_PARSER.add_argument("--output-file", type=str, help="output file")
-
-HACK_PARSER.add_argument("--input-file", type=str, help="input file")
-HACK_PARSER.add_argument("--output-file", type=str, help="output file")
-HACK_PARSER.add_argument("--model-file", required=True, type=str, help='path to model')
-
-TRAIN_PARSER.add_argument("--text-file", type=str, help='training text file')
-TRAIN_PARSER.add_argument("--model-file", required=True, type=str, help='path to model')
+    TRAIN_PARSER.add_argument("--text-file", type=str, help='training text file')
+    TRAIN_PARSER.add_argument("--model-file", required=True, type=str, help='path to model')
 
 
 def normalize(number, module):
@@ -122,128 +114,126 @@ def distance(string_a, string_b):
     return dist
 
 
-ARGS = PARSER.parse_args()
+def main():
+    parse_args()
+    ARGS = PARSER.parse_args()
+    fill_standard_alphabet()
 
-if ARGS.module == 'encode':
-    if ARGS.cipher == 'caesar':
-        STRING = ''
-        if ARGS.input_file is not None:
-            with open(ARGS.input_file, 'r') as f:
-                STRING = f.read()
-                f.close()
+    if ARGS.module == 'encode':
+        if ARGS.cipher == 'caesar':
+            STRING = ''
+            if ARGS.input_file is not None:
+                with open(ARGS.input_file, 'r') as f:
+                    STRING = f.read()
+            else:
+                STRING = sys.stdin.read()
+
+            KEY = int(ARGS.key)
+            RESULT = encode_caesar_string(STRING, KEY)
+            if ARGS.output_file is not None:
+                with open(ARGS.output_file, 'w') as f:
+                    f.write(RESULT)
+            else:
+                print(RESULT)
+
+        elif ARGS.cipher == 'vigenere':
+            STRING = ''
+            if ARGS.input_file is not None:
+                with open(ARGS.input_file, 'r') as f:
+                    STRING = f.read()
+            else:
+                STRING = sys.stdin.read()
+
+            KEY = ARGS.key
+            check_key(KEY)
+            RESULT = encode_vigenere_string(STRING, KEY)
+            if ARGS.output_file is not None:
+                with open(ARGS.output_file, 'w') as f:
+                    f.write(RESULT)
+            else:
+                print(RESULT)
+
+    elif ARGS.module == 'decode':
+        if ARGS.cipher == 'caesar':
+            STRING = ''
+            if ARGS.input_file is not None:
+                with open(ARGS.input_file, 'r') as f:
+                    STRING = f.read()
+            else:
+                STRING = sys.stdin.read()
+
+            KEY = int(ARGS.key)
+            RESULT = decode_caesar_string(STRING, int(KEY))
+            if ARGS.output_file is not None:
+                with open(ARGS.output_file, 'w') as f:
+                    f.write(RESULT)
+            else:
+                print(RESULT)
+
+        elif ARGS.cipher == 'vigenere':
+            STRING = ''
+            if ARGS.input_file is not None:
+                with open(ARGS.input_file, 'r') as f:
+                    STRING = f.read()
+            else:
+                STRING = sys.stdin.read()
+
+            KEY = ARGS.key
+            check_key(KEY)
+            RESULT = decode_vigenere_string(STRING, KEY)
+            if ARGS.output_file is not None:
+                with open(ARGS.output_file, 'w') as f:
+                    f.write(RESULT)
+            else:
+                print(RESULT)
+
+    elif ARGS.module == 'train':
+        init_standard_alphabet()
+        TRAINING_STRING = ''
+        if ARGS.text_file is not None:
+            with open(ARGS.text_file, 'r') as f:
+                TRAINING_STRING = f.read()
         else:
-            STRING = input()
-        KEY = int(ARGS.key)
-        RESULT = encode_caesar_string(STRING, KEY)
-        if ARGS.output_file is not None:
-            with open(ARGS.output_file, 'w') as f:
-                f.write(RESULT)
-                f.close()
-        else:
-            print(RESULT)
+            TRAINING_STRING = sys.stdin.read()
 
-    elif ARGS.cipher == 'vigenere':
-        STRING = ''
-        if ARGS.input_file is not None:
-            with open(ARGS.input_file, 'r') as f:
-                STRING = f.read()
-                f.close()
-        else:
-            STRING = input()
-        KEY = ARGS.key
-        check_key(KEY)
-        RESULT = encode_vigenere_string(STRING, KEY)
-        if ARGS.output_file is not None:
-            with open(ARGS.output_file, 'w') as f:
-                f.write(RESULT)
-                f.close()
-        else:
-            print(RESULT)
-
-elif ARGS.module == 'decode':
-    if ARGS.cipher == 'caesar':
-        STRING = ''
-        if ARGS.input_file is not None:
-            with open(ARGS.input_file, 'r') as f:
-                STRING = f.read()
-                f.close()
-        else:
-            STRING = input()
-        KEY = int(ARGS.key)
-        RESULT = decode_caesar_string(STRING, int(KEY))
-        if ARGS.output_file is not None:
-            with open(ARGS.output_file, 'w') as f:
-                f.write(RESULT)
-                f.close()
-        else:
-            print(RESULT)
-
-    elif ARGS.cipher == 'vigenere':
-        STRING = ''
-        if ARGS.input_file is not None:
-            with open(ARGS.input_file, 'r') as f:
-                STRING = f.read()
-                f.close()
-        else:
-            STRING = input()
-        KEY = ARGS.key
-        check_key(KEY)
-        RESULT = decode_vigenere_string(STRING, KEY)
-        if ARGS.output_file is not None:
-            with open(ARGS.output_file, 'w') as f:
-                f.write(RESULT)
-                f.close()
-        else:
-            print(RESULT)
-
-elif ARGS.module == 'train':
-    init_standard_alphabet()
-    TRAINING_STRING = ''
-    if ARGS.text_file is not None:
-        with open(ARGS.text_file, 'r') as f:
-            TRAINING_STRING = f.read()
-            f.close()
-    else:
-        TRAINING_STRING = input()
-
-    for symbol in TRAINING_STRING:
-        if symbol not in STAT:
-            continue
-        STAT[symbol] += 1
-
-    with open(ARGS.model_file, "wb") as model:
-        pickle.dump(STAT, model)
-        model.close()
-
-else:
-    init_standard_alphabet()
-    STRING = ''
-    if ARGS.input_file is not None:
-        with open(ARGS.input_file, 'r') as f:
-            STRING = f.read()
-            f.close()
-    else:
-        STRING = input()
-    DIC = {}
-    with open(ARGS.model_file, 'rb') as f:
-        DIC = pickle.load(f)
-        f.close()
-
-    RANK = collections.Counter()
-    for shift in range(LENGTH):
-        decoded_string = decode_caesar_string(STRING, shift)
-        for symbol in decoded_string:
+        for symbol in TRAINING_STRING:
+            if symbol not in STAT:
+                continue
             STAT[symbol] += 1
-        RANK[shift] = distance(STAT, DIC)
 
-    for shift in RANK.most_common()[-2:]:
-        KEY = shift[0]
-        print(shift)
-        RESULT = decode_caesar_string(STRING, KEY)
-        print("----------------------", KEY, "----------------------")
-        if ARGS.output_file is not None:
-            with open(ARGS.output_file, 'w') as f:
-                f.write(RESULT)
-                f.close()
+        with open(ARGS.model_file, "wb") as model:
+            pickle.dump(STAT, model)
+    else:
+        init_standard_alphabet()
+        STRING = ''
+        if ARGS.input_file is not None:
+            with open(ARGS.input_file, 'r') as f:
+                STRING = f.read()
         else:
-            print(RESULT)
+            STRING = sys.stdin.read()
+
+        DIC = {}
+        with open(ARGS.model_file, 'rb') as f:
+            DIC = pickle.load(f)
+
+        RANK = collections.Counter()
+        for shift in range(LENGTH):
+            decoded_string = decode_caesar_string(STRING, shift)
+            for symbol in decoded_string:
+                STAT[symbol] += 1
+            RANK[shift] = distance(STAT, DIC)
+
+        for shift in RANK.most_common()[-2:]:
+            KEY = shift[0]
+            print(shift)
+            RESULT = decode_caesar_string(STRING, KEY)
+            print("----------------------", KEY, "----------------------")
+            if ARGS.output_file is not None:
+                with open(ARGS.output_file, 'w') as f:
+                    f.write(RESULT)
+            else:
+                print(RESULT)
+
+
+if __name__ == "__main__":
+    main()
