@@ -36,12 +36,12 @@ def parse_args():
     hack_parser.set_defaults(module="hack")
     train_parser.set_defaults(module="train")
 
-    decode_parser.add_argument("--cipher", required=True, type=str, help="type of cipher")
+    decode_parser.add_argument("--cipher", required=True, type=str, help="type of cipher", choices=['caesar', 'vigenere'])
     decode_parser.add_argument("--key", required=True, type=str, help="cipher's key")
     decode_parser.add_argument("--input-file", type=str, help="input file")
     decode_parser.add_argument("--output-file", type=str, help="output file")
 
-    encode_parser.add_argument("--cipher", required=True, type=str, help="type of cipher")
+    encode_parser.add_argument("--cipher", required=True, type=str, help="type of cipher", choices=['caesar', 'vigenere'])
     encode_parser.add_argument("--key", required=True, type=str, help="cipher's key")
     encode_parser.add_argument("--input-file", type=str, help="input file")
     encode_parser.add_argument("--output-file", type=str, help="output file")
@@ -122,6 +122,7 @@ def encode(args):
             with open(args.output_file, 'w') as f:
                 f.write(result)
         else:
+            print()
             print(result)
 
     elif args.cipher == 'vigenere':
@@ -138,6 +139,7 @@ def encode(args):
             with open(args.output_file, 'w') as f:
                 f.write(result)
         else:
+            print()
             print(result)
 
 
@@ -155,6 +157,7 @@ def decode(args):
             with open(args.output_file, 'w') as f:
                 f.write(result)
         else:
+            print()
             print(result)
 
     elif args.cipher == 'vigenere':
@@ -171,6 +174,7 @@ def decode(args):
             with open(args.output_file, 'w') as f:
                 f.write(result)
         else:
+            print()
             print(result)
 
 
@@ -230,7 +234,8 @@ def hack(args):
         with open(args.output_file, 'w') as f:
             f.write(result)
     else:
-         print(result)
+        print()
+        print(result)
 
 
 def main():
