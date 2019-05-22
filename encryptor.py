@@ -5,8 +5,6 @@ import collections
 import string
 import sys
 
-PARSER = argparse.ArgumentParser()
-SUBS = PARSER.add_subparsers()
 STAT = {}
 POS = {}
 ALPHABET = string.ascii_letters + string.digits + string.punctuation + '\n\t —”“'
@@ -26,10 +24,13 @@ def init_standard_alphabet():
 
 
 def parse_args():
-    decode_parser = SUBS.add_parser("decode", description='this is decoding module')
-    encode_parser = SUBS.add_parser("encode", description='this is encoding module')
-    hack_parser = SUBS.add_parser("hack", description='this is hacking module')
-    train_parser = SUBS.add_parser("train", description='this is training module')
+    parser = argparse.ArgumentParser()
+    subs = parser.add_subparsers()
+
+    decode_parser = subs.add_parser("decode", description='this is decoding module')
+    encode_parser = subs.add_parser("encode", description='this is encoding module')
+    hack_parser = subs.add_parser("hack", description='this is hacking module')
+    train_parser = subs.add_parser("train", description='this is training module')
 
     decode_parser.set_defaults(module="decode")
     encode_parser.set_defaults(module="encode")
@@ -53,6 +54,7 @@ def parse_args():
     train_parser.add_argument("--text-file", type=str, help='training text file')
     train_parser.add_argument("--model-file", required=True, type=str, help='path to model')
 
+    return parser
 
 def normalize(number, module):
     number %= module
@@ -96,7 +98,7 @@ def decode_caesar_string(decoding_string, key):
 def check_key(key):
     for i in key:
         if i not in POS:
-            raise "invalid key"
+            raise RuntimeError("Invalid key")
 
 
 def distance(dict_a, dict_b, flag):
@@ -239,8 +241,8 @@ def hack(args):
 
 
 def main():
-    parse_args()
-    args = PARSER.parse_args()
+    parser = parse_args()
+    args = parser.parse_args()
     fill_standard_alphabet()
 
     if args.module == 'encode':
