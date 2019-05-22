@@ -68,6 +68,7 @@ def encode_vigenere_string(encoding_string, key, flag=1):
     key_size = len(key)
     not_found = dict()
     encoded_string = ''
+    letters = []
     for letter in encoding_string:
         if letter not in POS:
             not_found[letter] = 1
@@ -77,7 +78,8 @@ def encode_vigenere_string(encoding_string, key, flag=1):
 
         letter = ALPHABET[j]
         i = normalize(i + 1, key_size)
-        encoded_string += letter
+        letters.append(letter)
+    encoded_string = "".join(letters)
 
     return encoded_string
 
